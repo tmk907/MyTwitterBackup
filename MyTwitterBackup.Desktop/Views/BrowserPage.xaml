@@ -143,6 +143,22 @@
                         <TextBlock Text="Download" />
                     </StackPanel>
                 </Button>
+                <Button
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.AutomationId="AutoScrollButton"
+                    AutomationProperties.Name="{x:Bind ViewModel.AutoScrollLabel, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.ToggleAutoScrollCommand}"
+                    ToolTipService.ToolTip="Scrolls the page to the end of the list to detect all posts"
+                    Visibility="{x:Bind helpers:XamlHelpers.BoolToVisibility(ViewModel.IsListPage), Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.AutoScrollGlyph, Mode=OneWay}" />
+                        <TextBlock Text="{x:Bind ViewModel.AutoScrollLabel, Mode=OneWay}" />
+                    </StackPanel>
+                </Button>
+                <ProgressBar
+                    AutomationProperties.AutomationId="AutoScrollProgress"
+                    IsIndeterminate="True"
+                    Visibility="{x:Bind helpers:XamlHelpers.BoolToVisibility(ViewModel.IsAutoScrolling), Mode=OneWay}" />
                 <Grid>
                     <TextBlock AutomationProperties.AutomationId="DetectedCountText" Style="{StaticResource BodyStrongTextBlockStyle}">
                         <Run Text="{x:Bind ViewModel.DetectedCount, Mode=OneWay}" />

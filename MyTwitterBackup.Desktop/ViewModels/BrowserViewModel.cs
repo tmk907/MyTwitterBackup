@@ -16,6 +16,9 @@ namespace MyTwitterBackup.Desktop.ViewModels;
 public interface IWebViewHost
 {
     void Navigate(string url);
+
+    /// <summary>Starts or stops scrolling to the end of the list. Returns false when the page script is not available.</summary>
+    Task<bool> SetAutoScrollAsync(bool enabled);
 }
 
 public partial class BrowserViewModel : ObservableObject, IRecipient<ResolveMissingDataMessage>
@@ -52,6 +55,7 @@ public partial class BrowserViewModel : ObservableObject, IRecipient<ResolveMiss
         set
         {
             _host = value;
+            ToggleAutoScrollCommand.NotifyCanExecuteChanged();
             if (_host is not null && _resolveRequested)
             {
                 _resolveRequested = false;
@@ -64,8 +68,8 @@ public partial class BrowserViewModel : ObservableObject, IRecipient<ResolveMiss
     public partial string CurrentUrl { get; set; } = StartUrl;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ModeTitle), nameof(ModeDescription), nameof(ModeGlyph), nameof(IsDownloadablePage))]
-    [NotifyCanExecuteChangedFor(nameof(DownloadCommand))]
+    [NotifyPropertyChangedFor(nameof(ModeTitle), nameof(ModeDescription), nameof(ModeGlyph), nameof(IsDownloadablePage), nameof(IsListPage))]
+    [NotifyCanExecuteChangedFor(nameof(DownloadCommand), nameof(ToggleAutoScrollCommand))]
     public partial PageInfo Page { get; set; } = PageInfo.None;
 
     [ObservableProperty]
@@ -90,7 +94,18 @@ public partial class BrowserViewModel : ObservableObject, IRecipient<ResolveMiss
     [ObservableProperty]
     public partial string? ResolveProgressText { get; set; }
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AutoScrollLabel), nameof(AutoScrollGlyph))]
+    public partial bool IsAutoScrolling { get; set; }
+
     public bool IsDownloadablePage => Page.Mode != PageMode.None;
+
+    /// <summary>Bookmarks or likes: a list that can be scrolled to the end.</summary>
+    public bool IsListPage => Page.Mode is PageMode.Bookmarks or PageMode.Likes;
+
+    public string AutoScrollLabel => IsAutoScrolling ? "Stop scrolling" : "Scroll to the end";
+
+    public string AutoScrollGlyph => IsAutoScrolling ? "\uE71A" : "\uE74B"; // Stop : Down
 
     public string ModeTitle => Page.Mode switch
     {
@@ -104,7 +119,7 @@ public partial class BrowserViewModel : ObservableObject, IRecipient<ResolveMiss
     {
         PageMode.Single => "Click Download to add this post to the queue.",
         PageMode.Bookmarks or PageMode.Likes =>
-            "Scroll the page to detect more posts. Download adds all detected posts to the queue.",
+            "Scroll the page (or use Scroll to the end) to detect more posts. Download adds all detected posts to the queue.",
         _ => "Open a post, your bookmarks (x.com/i/bookmarks) or likes (x.com/{user}/likes). Log in to x.com first.",
     };
 
@@ -133,6 +148,12 @@ public partial class BrowserViewModel : ObservableObject, IRecipient<ResolveMiss
 
         Page = page;
         StatusMessage = null;
+        if (IsAutoScrolling)
+        {
+            // The page script stops by itself when the url changes; this only resets the button.
+            IsAutoScrolling = false;
+            _ = Host?.SetAutoScrollAsync(false);
+        }
 
         if (page.Mode == PageMode.None)
         {
@@ -182,6 +203,11 @@ public partial class BrowserViewModel : ObservableObject, IRecipient<ResolveMiss
                         .Select(p => (p.User, Id: p.Id!))
                         .ToList();
                     OnDomPosts(pageUrl, posts);
+                    break;
+
+                case "autoscroll":
+                    var reachedEnd = root.GetProperty("state").GetString() == "done";
+                    App.MainDispatcher.TryEnqueue(() => OnAutoScrollEnded(reachedEnd));
                     break;
             }
         }
@@ -324,6 +350,48 @@ public partial class BrowserViewModel : ObservableObject, IRecipient<ResolveMiss
         }
 
         UpdateCounts();
+    }
+
+    private bool CanToggleAutoScroll() => IsListPage && Host is not null;
+
+    [RelayCommand(CanExecute = nameof(CanToggleAutoScroll))]
+    private async Task ToggleAutoScrollAsync()
+    {
+        if (Host is null)
+        {
+            return;
+        }
+
+        if (IsAutoScrolling)
+        {
+            IsAutoScrolling = false;
+            await Host.SetAutoScrollAsync(false);
+            return;
+        }
+
+        if (await Host.SetAutoScrollAsync(true))
+        {
+            IsAutoScrolling = true;
+            StatusMessage = null;
+        }
+        else
+        {
+            StatusMessage = "Auto-scroll is not available on this page. Reload the page and try again.";
+        }
+    }
+
+    private void OnAutoScrollEnded(bool reachedEnd)
+    {
+        if (!IsAutoScrolling)
+        {
+            return;
+        }
+
+        IsAutoScrolling = false;
+        if (reachedEnd)
+        {
+            StatusMessage = $"Reached the end of the list: {DetectedCount} post(s) detected.";
+        }
     }
 
     [RelayCommand]

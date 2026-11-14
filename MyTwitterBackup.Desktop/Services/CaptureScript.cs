@@ -6,7 +6,9 @@ namespace MyTwitterBackup.Desktop.Services;
 /// 1. hooks XMLHttpRequest and fetch and forwards every GraphQL response body to the app
 ///    with window.chrome.webview.postMessage({ type: 'graphql', url, body });
 /// 2. scans the rendered timeline (article elements) while the user scrolls and posts the ids of
-///    visible posts: { type: 'dom', url, posts: [{ user, id }] }.
+///    visible posts: { type: 'dom', url, posts: [{ user, id }] };
+/// 3. on request (window.__mtbAutoScroll.start()/stop()) scrolls to the end of the list and reports
+///    when it stops: { type: 'autoscroll', state: 'done' | 'stopped', url }.
 /// </summary>
 public static class CaptureScript
 {
@@ -93,6 +95,37 @@ public static class CaptureScript
     schedule();
   };
   if (document.body) { start(); } else { document.addEventListener('DOMContentLoaded', start); }
+
+  // Auto-scroll. Scrolls step by step (not straight to the bottom) so every post gets rendered and
+  // scanned; the list has ended when the page stops growing for ~15 s while at the bottom.
+  let scrollTimer = null;
+  let scrollHref = null;
+  let idleTicks = 0;
+  const stopScroll = (state) => {
+    if (!scrollTimer) { return; }
+    clearInterval(scrollTimer);
+    scrollTimer = null;
+    post({ type: 'autoscroll', state: state, url: location.href });
+  };
+  const scrollTick = () => {
+    if (location.href !== scrollHref) { stopScroll('stopped'); return; }
+    const element = document.scrollingElement || document.documentElement;
+    if (element.scrollTop + window.innerHeight >= element.scrollHeight - 4) {
+      if (++idleTicks >= 30) { stopScroll('done'); return; }
+    } else {
+      idleTicks = 0;
+    }
+    window.scrollBy(0, Math.round(window.innerHeight * 0.8));
+  };
+  window.__mtbAutoScroll = {
+    start: () => {
+      if (scrollTimer) { return; }
+      scrollHref = location.href;
+      idleTicks = 0;
+      scrollTimer = setInterval(scrollTick, 500);
+    },
+    stop: () => stopScroll('stopped'),
+  };
 })();
 """;
 }

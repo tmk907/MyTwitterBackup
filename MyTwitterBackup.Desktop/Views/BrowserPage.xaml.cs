@@ -35,6 +35,19 @@ public sealed partial class BrowserPage : Page, IWebViewHost
         }
     }
 
+    public async Task<bool> SetAutoScrollAsync(bool enabled)
+    {
+        if (WebView.CoreWebView2 is null)
+        {
+            return false;
+        }
+
+        var action = enabled ? "start" : "stop";
+        var result = await WebView.CoreWebView2.ExecuteScriptAsync(
+            $"window.__mtbAutoScroll ? (window.__mtbAutoScroll.{action}(), true) : false");
+        return result == "true";
+    }
+
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         if (_initialized)
