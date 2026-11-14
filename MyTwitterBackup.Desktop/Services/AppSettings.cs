@@ -8,7 +8,7 @@ public sealed class AppSettings : IAppSettings
 {
     private readonly ApplicationDataContainer _values = ApplicationData.Current.LocalSettings;
 
-    /// <summary>Default for both downloads and database: user profile/Downloads/MyTwitterBackup.</summary>
+    /// <summary>Default folder for the database and media: user profile/Downloads/MyTwitterBackup.</summary>
     public static string DefaultFolder
     {
         get
@@ -33,16 +33,17 @@ public sealed class AppSettings : IAppSettings
         set => _values.Values[nameof(DownloadsFolder)] = value;
     }
 
-    public string DatabaseFolder
-    {
-        get => Get(nameof(DatabaseFolder), DefaultFolder);
-        set => _values.Values[nameof(DatabaseFolder)] = value;
-    }
 
     public bool SaveRawResponses
     {
         get => _values.Values[nameof(SaveRawResponses)] is bool b && b;
         set => _values.Values[nameof(SaveRawResponses)] = value;
+    }
+
+    public bool AutoPlayVideos
+    {
+        get => _values.Values[nameof(AutoPlayVideos)] is not bool b || b;
+        set => _values.Values[nameof(AutoPlayVideos)] = value;
     }
 
     public string AppDataFolder => ApplicationData.Current.LocalFolder.Path;

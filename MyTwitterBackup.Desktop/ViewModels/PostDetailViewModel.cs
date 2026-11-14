@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using MyTwitterBackup.Core.Database;
 using MyTwitterBackup.Core.Models;
+using MyTwitterBackup.Core.Services;
 using MyTwitterBackup.Desktop.Services;
 using Windows.Media.Core;
 
@@ -43,6 +44,10 @@ public sealed class MediaItemViewModel : IDisposable
 
     public string Description { get; }
 
+    public bool AutoPlay { get; set; }
+
+    public bool IsLooping => Type == MediaType.AnimatedGif;
+
     public ImageSource? Image => FileExists && !IsVideo
         ? new BitmapImage(new Uri(FilePath!)) { DecodePixelWidth = 1600 }
         : null;
@@ -65,7 +70,7 @@ public sealed class MediaItemViewModel : IDisposable
 /// <summary>Preview of a downloaded post (and its quoted post).</summary>
 public sealed partial class PostDetailViewModel : IDisposable
 {
-    public PostDetailViewModel(Post post, string downloadsFolder, bool includeQuoted = true)
+    public PostDetailViewModel(Post post, string downloadsFolder, bool autoPlay = false, bool includeQuoted = true)
     {
         Id = post.Id;
         DisplayName = string.IsNullOrEmpty(post.DisplayName) ? post.UserName : post.DisplayName;
@@ -76,11 +81,26 @@ public sealed partial class PostDetailViewModel : IDisposable
         var firstMediaPath = post.Media.Select(m => m.LocalPath).FirstOrDefault(p => p is not null);
         FolderPath = firstMediaPath is not null
             ? Path.Combine(downloadsFolder, Path.GetDirectoryName(firstMediaPath)!)
-            : Path.Combine(downloadsFolder, post.UserId, post.Id);
+            : Path.Combine(downloadsFolder, DownloadQueueService.MediaFolderName, post.UserId, post.Id);
         Media = post.Media.OrderBy(m => m.Index).Select(m => new MediaItemViewModel(m, downloadsFolder)).ToList();
         Quoted = includeQuoted && post.QuotedPost is not null
             ? new PostDetailViewModel(post.QuotedPost, downloadsFolder, includeQuoted: false)
             : null;
+
+        if (autoPlay)
+        {
+            // GIFs are silent and all play; only the first video plays so sounds do not overlap.
+            var allMedia = Media.Concat(Quoted?.Media ?? []).ToList();
+            foreach (var gif in allMedia.Where(m => m.Type == MediaType.AnimatedGif))
+            {
+                gif.AutoPlay = true;
+            }
+
+            if (allMedia.FirstOrDefault(m => m.Type == MediaType.Video) is { } video)
+            {
+                video.AutoPlay = true;
+            }
+        }
 
         var metadata = new List<MetadataEntry>
         {

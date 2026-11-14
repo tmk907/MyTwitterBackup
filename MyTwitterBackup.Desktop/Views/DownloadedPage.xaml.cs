@@ -1,4 +1,3 @@
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using MyTwitterBackup.Core.Models;
@@ -33,16 +32,6 @@ public sealed partial class DownloadedPage : Page
         if (sender.SelectedItem?.Tag is string tag && Enum.TryParse<SourceType>(tag, out var source))
         {
             ViewModel.SelectedSource = source;
-        }
-    }
-
-    private void MediaPlayerElement_Unloaded(object sender, RoutedEventArgs e)
-    {
-        // Stop playback when the preview changes; otherwise audio keeps playing.
-        if (sender is MediaPlayerElement element)
-        {
-            element.MediaPlayer?.Pause();
-            element.Source = null;
         }
     }
 }

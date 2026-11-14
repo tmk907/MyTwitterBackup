@@ -36,7 +36,10 @@
                     <FontIcon VerticalAlignment="Center" Glyph="&#xE896;" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="Downloads folder" />
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Media is saved to {folder}\{user id}\{post id}\" />
+                        <TextBlock
+                            Style="{StaticResource SecondaryTextStyle}"
+                            Text="Holds the database (queue and downloaded posts) and media in {folder}\data\{user id}\{post id}\. Existing data is not moved when you change the folder."
+                            TextWrapping="Wrap" />
                         <TextBlock
                             AutomationProperties.AutomationId="DownloadsFolderText"
                             IsTextSelectionEnabled="True"
@@ -68,47 +71,9 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <FontIcon VerticalAlignment="Center" Glyph="&#xE7C3;" />
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="Database location" />
-                        <TextBlock
-                            Style="{StaticResource SecondaryTextStyle}"
-                            Text="Queue and downloaded posts (SQLite). Existing data is not moved when you change the folder."
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            AutomationProperties.AutomationId="DatabasePathText"
-                            IsTextSelectionEnabled="True"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="{x:Bind ViewModel.DatabasePath, Mode=OneWay}"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-                    <StackPanel
-                        Grid.Column="2"
-                        VerticalAlignment="Center"
-                        Orientation="Horizontal"
-                        Spacing="8">
-                        <Button
-                            AutomationProperties.AutomationId="OpenDatabaseFolderButton"
-                            Command="{x:Bind ViewModel.OpenDatabaseFolderCommand}"
-                            Content="Open" />
-                        <Button
-                            AutomationProperties.AutomationId="ChangeDatabaseFolderButton"
-                            Command="{x:Bind ViewModel.ChangeDatabaseFolderCommand}"
-                            Content="Change..." />
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <Border Style="{StaticResource CardBorderStyle}">
-                <Grid ColumnSpacing="16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
                     <FontIcon VerticalAlignment="Center" Glyph="&#xE777;" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="Reset to default folders" />
+                        <TextBlock Text="Reset to default folder" />
                         <TextBlock
                             Style="{StaticResource SecondaryTextStyle}"
                             Text="{x:Bind ViewModel.DefaultFolder}"
@@ -117,8 +82,8 @@
                     <Button
                         Grid.Column="2"
                         VerticalAlignment="Center"
-                        AutomationProperties.AutomationId="ResetFoldersButton"
-                        Command="{x:Bind ViewModel.ResetFoldersCommand}"
+                        AutomationProperties.AutomationId="ResetFolderButton"
+                        Command="{x:Bind ViewModel.ResetFolderCommand}"
                         Content="Reset" />
                 </Grid>
             </Border>

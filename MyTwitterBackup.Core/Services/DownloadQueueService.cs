@@ -608,12 +608,16 @@ public sealed class DownloadQueueService : IDisposable
         }
     }
 
+    /// <summary>Subfolder of the downloads folder that holds media.</summary>
+    public const string MediaFolderName = "data";
+
+    /// <summary>Media folder of a post relative to the downloads folder: data/{userId}/{postId}.</summary>
     public static string GetRelativeFolder(TweetData tweet)
     {
         var user = !string.IsNullOrEmpty(tweet.UserId) ? tweet.UserId
             : !string.IsNullOrEmpty(tweet.UserName) ? tweet.UserName
             : "unknown";
-        return Path.Combine(SafeFileName(user), SafeFileName(tweet.Id));
+        return Path.Combine(MediaFolderName, SafeFileName(user), SafeFileName(tweet.Id));
     }
 
     public static string Snippet(string? text, int maxLength = 140)

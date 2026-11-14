@@ -43,9 +43,9 @@ public sealed class DownloadQueueServiceTests : IDisposable
         Assert.Equal(2, post.Sources.Count);
         Assert.Equal("300", (await db.Posts.SingleAsync(p => p.Id == "200")).QuotedPostId);
         Assert.True(await db.Posts.AnyAsync(p => p.Id == "300"));
-        Assert.True(File.Exists(Path.Combine(_root, "downloads", "11", "100", "01_900.jpg")));
-        Assert.True(File.Exists(Path.Combine(_root, "downloads", "11", "100", "02_901.mp4")));
-        Assert.True(File.Exists(Path.Combine(_root, "downloads", "33", "300", "01_950.mp4")));
+        Assert.True(File.Exists(Path.Combine(_root, "downloads", "data", "11", "100", "01_900.jpg")));
+        Assert.True(File.Exists(Path.Combine(_root, "downloads", "data", "11", "100", "02_901.mp4")));
+        Assert.True(File.Exists(Path.Combine(_root, "downloads", "data", "33", "300", "01_950.mp4")));
 
         // Photo, video, video poster, gif, gif poster: each downloaded once although post 100 was queued twice.
         Assert.Equal(5, _handler.Requests.Count);
@@ -99,8 +99,8 @@ public sealed class DownloadQueueServiceTests : IDisposable
     private sealed class TestSettings(string root) : IAppSettings
     {
         public string DownloadsFolder { get; set; } = Path.Combine(root, "downloads");
-        public string DatabaseFolder { get; set; } = Path.Combine(root, "db");
         public bool SaveRawResponses { get; set; }
+        public bool AutoPlayVideos { get; set; } = true;
         public string AppDataFolder => root;
     }
 

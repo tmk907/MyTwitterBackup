@@ -10,7 +10,7 @@ Back up your X (Twitter) bookmarks, likes and single posts: text, metadata, phot
 * Likes: open `https://x.com/{user}/likes` (or `https://x.com/i/history/likes`), scroll, click **Download**.
 * Persistent download queue (SQLite). It resumes after a restart and supports retry, pause and clear.
 * Downloaded posts browser with Bookmarks / Liked / Other tabs and a preview of the text, media and metadata.
-* Media is saved to `{downloads folder}\{user id}\{post id}\`. Default folder: `%USERPROFILE%\Downloads\MyTwitterBackup`.
+* The database and media are kept in one folder (default `%USERPROFILE%\Downloads\MyTwitterBackup`); media goes to `{folder}\data\{user id}\{post id}\`.
 
 ## Install
 

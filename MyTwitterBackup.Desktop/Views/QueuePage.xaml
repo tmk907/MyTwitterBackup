@@ -36,37 +36,37 @@
                     </AppBarButton.Icon>
                 </AppBarButton>
                 <AppBarButton
-                    AutomationProperties.AutomationId="RetryFailedButton"
-                    Command="{x:Bind ViewModel.RetryFailedCommand}"
-                    Label="Retry failed">
+                    AutomationProperties.AutomationId="ClearCompletedButton"
+                    Command="{x:Bind ViewModel.ClearCompletedCommand}"
+                    Label="Clear completed">
                     <AppBarButton.Icon>
-                        <FontIcon Glyph="&#xE72C;" />
+                        <FontIcon Glyph="&#xE73E;" />
                     </AppBarButton.Icon>
                 </AppBarButton>
                 <AppBarButton
-                    AutomationProperties.AutomationId="FetchMissingDataButton"
-                    Command="{x:Bind ViewModel.FetchMissingDataCommand}"
-                    Label="Fetch missing data"
-                    ToolTipService.ToolTip="Opens each post without captured data in the browser to capture it">
+                    AutomationProperties.AutomationId="ClearQueueButton"
+                    Click="ClearQueueButton_Click"
+                    Label="Clear queue">
                     <AppBarButton.Icon>
-                        <FontIcon Glyph="&#xE774;" />
+                        <FontIcon Glyph="&#xE74D;" />
                     </AppBarButton.Icon>
                 </AppBarButton>
                 <CommandBar.SecondaryCommands>
                     <AppBarButton
-                        AutomationProperties.AutomationId="ClearCompletedButton"
-                        Command="{x:Bind ViewModel.ClearCompletedCommand}"
-                        Label="Clear completed">
+                        AutomationProperties.AutomationId="RetryFailedButton"
+                        Command="{x:Bind ViewModel.RetryFailedCommand}"
+                        Label="Retry failed">
                         <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE73E;" />
+                            <FontIcon Glyph="&#xE72C;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton
-                        AutomationProperties.AutomationId="ClearQueueButton"
-                        Click="ClearQueueButton_Click"
-                        Label="Clear entire queue">
+                        AutomationProperties.AutomationId="FetchMissingDataButton"
+                        Command="{x:Bind ViewModel.FetchMissingDataCommand}"
+                        Label="Fetch missing data"
+                        ToolTipService.ToolTip="Opens each post without captured data in the browser to capture it">
                         <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE74D;" />
+                            <FontIcon Glyph="&#xE774;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                 </CommandBar.SecondaryCommands>

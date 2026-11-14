@@ -56,6 +56,12 @@ public partial class DownloadedViewModel(PostRepository repository, IAppSettings
     [ObservableProperty]
     public partial string? ErrorMessage { get; set; }
 
+    /// <summary>Applies to the next previewed post.</summary>
+    [ObservableProperty]
+    public partial bool AutoPlayVideos { get; set; } = settings.AutoPlayVideos;
+
+    partial void OnAutoPlayVideosChanged(bool value) => settings.AutoPlayVideos = value;
+
     partial void OnSelectedSourceChanged(SourceType value) => _ = LoadAsync();
 
     partial void OnFilterTextChanged(string value) => ApplyFilter();
@@ -113,7 +119,7 @@ public partial class DownloadedViewModel(PostRepository repository, IAppSettings
             var post = await repository.GetPostAsync(item.Id);
             if (version == _detailVersion)
             {
-                Detail = post is null ? null : new PostDetailViewModel(post, settings.DownloadsFolder);
+                Detail = post is null ? null : new PostDetailViewModel(post, settings.DownloadsFolder, AutoPlayVideos);
             }
         }
         catch (Exception ex)
