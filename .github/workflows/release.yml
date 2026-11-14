@@ -1,0 +1,140 @@
+# Builds, signs and packages the WinUI 3 app as MSIX (x64 and ARM64) and publishes it in GitHub Releases.
+#
+# Trigger: push a tag like v1.2.3 (version 1.2.3.0 is written to Package.appxmanifest),
+# or run manually (workflow_dispatch) to only produce build artifacts.
+#
+# Signing: set the repository secrets BASE64_ENCODED_PFX (base64 of a .pfx whose subject matches the
+# Publisher in Package.appxmanifest, "CN=tmk907") and PFX_PASSWORD. Without them a temporary
+# self-signed certificate is generated; its .cer is attached to the release and must be trusted
+# (Local Machine > Trusted People) before installing the .msix.
+
+name: Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version (x.y.z)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      Project: MyTwitterBackup.Desktop\MyTwitterBackup.Desktop.csproj
+      Manifest: MyTwitterBackup.Desktop\Package.appxmanifest
+      Publisher: CN=tmk907
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Compute version
+      id: version
+      shell: pwsh
+      run: |
+        $version = '${{ github.event.inputs.version }}'
+        if ('${{ github.ref_type }}' -eq 'tag') { $version = '${{ github.ref_name }}'.TrimStart('v') }
+        if ([string]::IsNullOrWhiteSpace($version)) { $version = "1.0.${{ github.run_number }}" }
+        $parts = @($version.Split('.') | ForEach-Object { [int]$_ })
+        while ($parts.Count -lt 4) { $parts += 0 }
+        $packageVersion = ($parts[0..3] -join '.')
+        "package=$packageVersion" >> $env:GITHUB_OUTPUT
+        Write-Host "Package version: $packageVersion"
+
+    - name: Set manifest version
+      shell: pwsh
+      run: |
+        [xml]$xml = Get-Content $env:Manifest
+        $xml.Package.Identity.Version = '${{ steps.version.outputs.package }}'
+        $xml.Save((Resolve-Path $env:Manifest).Path)
+
+    - name: Test
+      run: dotnet test MyTwitterBackup.Tests\MyTwitterBackup.Tests.csproj -c Release
+
+    - name: Prepare signing certificate
+      id: cert
+      shell: pwsh
+      env:
+        PFX_BASE64: ${{ secrets.BASE64_ENCODED_PFX }}
+        PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
+      run: |
+        $pfxPath = Join-Path $env:RUNNER_TEMP 'signing.pfx'
+        $password = $env:PFX_PASSWORD
+        if (-not [string]::IsNullOrEmpty($env:PFX_BASE64)) {
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:PFX_BASE64))
+          "selfsigned=false" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Host "BASE64_ENCODED_PFX not set - generating a temporary self-signed certificate."
+          $password = [Guid]::NewGuid().ToString('N')
+          $cert = New-SelfSignedCertificate -Type Custom -Subject $env:Publisher -KeyUsage DigitalSignature `
+            -FriendlyName 'MyTwitterBackup' -CertStoreLocation 'Cert:\CurrentUser\My' `
+            -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
+          $secure = ConvertTo-SecureString -String $password -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $secure | Out-Null
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Export-Certificate -Cert $cert -FilePath release\MyTwitterBackup.cer | Out-Null
+          "selfsigned=true" >> $env:GITHUB_OUTPUT
+        }
+        Write-Host "::add-mask::$password"
+        "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
+        "PFX_PASS=$password" >> $env:GITHUB_ENV
+
+    - name: Build MSIX packages
+      shell: pwsh
+      run: |
+        foreach ($arch in 'x64', 'arm64') {
+          $packageDir = Join-Path $PWD "artifacts\$arch\"
+          dotnet publish $env:Project -c Release -r "win-$arch" `
+            -p:PublishAppxPackage=true `
+            -p:GenerateAppxPackageOnBuild=false `
+            -p:IncludePublishItemsOutputGroup=true `
+            -p:AppxBundle=Never `
+            -p:UapAppxPackageBuildMode=SideloadOnly `
+            -p:AppxPackageSigningEnabled=true `
+            -p:PackageCertificateKeyFile="$env:PFX_PATH" `
+            -p:PackageCertificatePassword="$env:PFX_PASS" `
+            -p:AppxPackageDir="$packageDir"
+          if ($LASTEXITCODE -ne 0) { throw "Packaging for $arch failed" }
+        }
+        New-Item -ItemType Directory -Force -Path release | Out-Null
+        Get-ChildItem artifacts -Recurse -Filter *.msix | Copy-Item -Destination release
+        Get-ChildItem release
+
+    - name: Remove the certificate
+      if: always()
+      shell: pwsh
+      run: |
+        if ($env:PFX_PATH -and (Test-Path $env:PFX_PATH)) { Remove-Item $env:PFX_PATH }
+        Get-ChildItem Cert:\CurrentUser\My | Where-Object Subject -eq $env:Publisher | Remove-Item -ErrorAction SilentlyContinue
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: MyTwitterBackup-${{ steps.version.outputs.package }}
+        path: release\*
+
+    - name: Publish GitHub release
+      if: github.ref_type == 'tag'
+      uses: softprops/action-gh-release@v2
+      with:
+        name: MyTwitterBackup ${{ github.ref_name }}
+        files: release/*
+        generate_release_notes: true
+        body: |
+          Install the `.msix` for your architecture (x64 or ARM64).
+          ${{ steps.cert.outputs.selfsigned == 'true' && 'This build is signed with a self-signed certificate: before installing, import `MyTwitterBackup.cer` to Local Machine > Trusted People.' || '' }}

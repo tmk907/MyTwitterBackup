@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MyTwitterBackup.Desktop (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "MyTwitterBackup.Desktop (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

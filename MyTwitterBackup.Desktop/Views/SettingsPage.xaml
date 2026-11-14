@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="MyTwitterBackup.Desktop.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:MyTwitterBackup.Desktop.Helpers"
+    x:DefaultBindMode="OneTime">
+
+    <ScrollViewer>
+        <StackPanel
+            MaxWidth="900"
+            Padding="24,8,24,24"
+            HorizontalAlignment="Stretch"
+            Spacing="8">
+            <TextBlock
+                Margin="0,0,0,8"
+                Style="{StaticResource TitleTextBlockStyle}"
+                Text="Settings" />
+
+            <InfoBar
+                AutomationProperties.AutomationId="SettingsMessageInfoBar"
+                IsOpen="{x:Bind helpers:XamlHelpers.HasText(ViewModel.Message), Mode=OneWay}"
+                IsClosable="False"
+                Message="{x:Bind ViewModel.Message, Mode=OneWay}"
+                Severity="{x:Bind helpers:XamlHelpers.ErrorSeverity(ViewModel.IsError), Mode=OneWay}" />
+
+            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Storage" />
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <Grid ColumnSpacing="16" RowSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <FontIcon VerticalAlignment="Center" Glyph="&#xE896;" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Downloads folder" />
+                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Media is saved to {folder}\{user id}\{post id}\" />
+                        <TextBlock
+                            AutomationProperties.AutomationId="DownloadsFolderText"
+                            IsTextSelectionEnabled="True"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind ViewModel.DownloadsFolder, Mode=OneWay}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                        <Button
+                            AutomationProperties.AutomationId="OpenDownloadsFolderButton"
+                            Command="{x:Bind ViewModel.OpenDownloadsFolderCommand}"
+                            Content="Open" />
+                        <Button
+                            AutomationProperties.AutomationId="ChangeDownloadsFolderButton"
+                            Command="{x:Bind ViewModel.ChangeDownloadsFolderCommand}"
+                            Content="Change..." />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <FontIcon VerticalAlignment="Center" Glyph="&#xE7C3;" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Database location" />
+                        <TextBlock
+                            Style="{StaticResource SecondaryTextStyle}"
+                            Text="Queue and downloaded posts (SQLite). Existing data is not moved when you change the folder."
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            AutomationProperties.AutomationId="DatabasePathText"
+                            IsTextSelectionEnabled="True"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind ViewModel.DatabasePath, Mode=OneWay}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                        <Button
+                            AutomationProperties.AutomationId="OpenDatabaseFolderButton"
+                            Command="{x:Bind ViewModel.OpenDatabaseFolderCommand}"
+                            Content="Open" />
+                        <Button
+                            AutomationProperties.AutomationId="ChangeDatabaseFolderButton"
+                            Command="{x:Bind ViewModel.ChangeDatabaseFolderCommand}"
+                            Content="Change..." />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <FontIcon VerticalAlignment="Center" Glyph="&#xE777;" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Reset to default folders" />
+                        <TextBlock
+                            Style="{StaticResource SecondaryTextStyle}"
+                            Text="{x:Bind ViewModel.DefaultFolder}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        AutomationProperties.AutomationId="ResetFoldersButton"
+                        Command="{x:Bind ViewModel.ResetFoldersCommand}"
+                        Content="Reset" />
+                </Grid>
+            </Border>
+
+            <TextBlock
+                Margin="0,16,0,0"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="Diagnostics" />
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <FontIcon VerticalAlignment="Center" Glyph="&#xE9D9;" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Save captured x.com API responses" />
+                        <TextBlock
+                            Style="{StaticResource SecondaryTextStyle}"
+                            Text="Writes raw GraphQL responses to the app data folder. Useful when posts are not detected."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ToggleSwitch
+                        Grid.Column="2"
+                        AutomationProperties.AutomationId="SaveRawResponsesToggle"
+                        AutomationProperties.Name="Save captured x.com API responses"
+                        IsOn="{x:Bind ViewModel.SaveRawResponses, Mode=TwoWay}" />
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <FontIcon VerticalAlignment="Center" Glyph="&#xE8A5;" />
+                    <TextBlock
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Text="Logs" />
+                    <Button
+                        Grid.Column="2"
+                        AutomationProperties.AutomationId="OpenLogsFolderButton"
+                        Command="{x:Bind ViewModel.OpenLogsFolderCommand}"
+                        Content="Open logs folder" />
+                </Grid>
+            </Border>
+
+            <TextBlock
+                Margin="0,16,0,0"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="About" />
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="4">
+                    <TextBlock>
+                        <Run Text="MyTwitterBackup" />
+                        <Run Text="{x:Bind ViewModel.AppVersion}" />
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap">
+                        Log in to x.com in the Browser. Open a post, your bookmarks (x.com/i/bookmarks or x.com/i/history) or likes (x.com/{user}/likes or x.com/i/history/likes),
+                        scroll to detect posts and click Download. Downloads continue after an app restart.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
