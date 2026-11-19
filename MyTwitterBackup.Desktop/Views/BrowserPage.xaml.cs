@@ -16,6 +16,11 @@ namespace MyTwitterBackup.Desktop.Views;
 /// </summary>
 public sealed partial class BrowserPage : Page, IWebViewHost
 {
+    private static readonly HashSet<string> s_authHosts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "accounts.google.com", "appleid.apple.com",
+    };
+
     private bool _initialized;
 
     public BrowserPage()
@@ -130,18 +135,29 @@ public sealed partial class BrowserPage : Page, IWebViewHost
 
     private void OnNewWindowRequested(CoreWebView2 sender, CoreWebView2NewWindowRequestedEventArgs args)
     {
-        // Keep x.com links in the app browser; open external links in the default browser.
-        if (Uri.TryCreate(args.Uri, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(args.Uri, UriKind.Absolute, out var uri))
         {
-            args.Handled = true;
-            if (XUrlClassifier.IsXHost(uri))
-            {
-                sender.Navigate(uri.ToString());
-            }
-            else
-            {
-                _ = Launcher.LaunchUriAsync(uri);
-            }
+            return;
+        }
+
+        Log.Debug("New window requested {Url}", uri);
+
+        // Sign-in popups (Google, Apple) must stay inside WebView2: they report back via window.opener
+        // and their cookies must land in the app's profile. Leaving Handled = false opens a WebView2 popup.
+        if (s_authHosts.Contains(uri.Host))
+        {
+            return;
+        }
+
+        // Keep x.com links in the app browser; open external links in the default browser.
+        args.Handled = true;
+        if (XUrlClassifier.IsXHost(uri))
+        {
+            sender.Navigate(uri.ToString());
+        }
+        else
+        {
+            _ = Launcher.LaunchUriAsync(uri);
         }
     }
 
